@@ -7,22 +7,17 @@ def main():
     # --- FASE 1: MENCARI SOLUSI FISIBEL ---
     print("--- ✳️ MEMULAI FASE 1 ---")
     
-    # Tujuan Fase 1: Maksimalkan R = -a1 - a2
-    # Kolom: [x1, x2, s1, s2, s3, a1, a2, R, Solusi]
+    # ... (Bagian Fase 1 tetap sama persis)
     tableau_p1 = np.array([
         [3.,  2., -1.,  0.,  0.,  1.,  0., 0., 3.],
         [1.,  4.,  0., -1.,  0.,  0.,  1., 0., 4.],
         [1.,  1.,  0.,  0.,  1.,  0.,  0., 0., 5.],
-        [0.,  0.,  0.,  0.,  0.,  1.,  1., 1., 0.]  # Baris R + a1 + a2 = 0
+        [0.,  0.,  0.,  0.,  0.,  1.,  1., 1., 0.]
     ])
-
-    # Buat kanonik: R_baru = R_lama - R_a1 - R_a2
     tableau_p1[-1, :] -= tableau_p1[0, :]
     tableau_p1[-1, :] -= tableau_p1[1, :]
     
     solver_p1 = SimplexSolver(tableau_p1)
-    print("Tableau Awal Fase 1 (Setelah Koreksi Basis):")
-    print(solver_p1)
     solver_p1.solve()
     
     hasil_p1 = solver_p1.tableau
@@ -33,29 +28,24 @@ def main():
     # --- FASE 2: OPTIMASI FUNGSI ASLI ---
     print("\n\n--- ✅ MEMULAI FASE 2 ---")
     
-    # Buang kolom artifisial (a1, a2) dan kolom R
-    num_vars_original_slack = 5 # x1, x2, s1, s2, s3
-    cols_to_keep = list(range(num_vars_original_slack)) + [-1] # Indeks 0,1,2,3,4 dan -1 (terakhir)
+    # ... (Bagian persiapan dan penyelesaian Fase 2 tetap sama persis)
+    num_vars_original_slack = 5
+    cols_to_keep = list(range(num_vars_original_slack)) + [-1]
     tableau_p2_constraints = hasil_p1[:-1, cols_to_keep]
 
-    # Buat baris tujuan P (Z) baru: 5x1 + 8x2 + P = 0
-    num_cols_p2 = tableau_p2_constraints.shape[1]
-    p_row = np.zeros(num_cols_p2 + 1) # Tambah 1 untuk kolom P
-    p_row[0] = 5  # Koefisien x1
-    p_row[1] = 8  # Koefisien x2
-    p_row[-2] = 1 # Kolom P (Z)
+    p_row = np.zeros(tableau_p2_constraints.shape[1] + 1)
+    p_row[0] = 5
+    p_row[1] = 8
+    p_row[-2] = 1
     
-    # Gabungkan semuanya
     col_p_for_constraints = np.zeros((tableau_p2_constraints.shape[0], 1))
     tableau_p2 = np.hstack([tableau_p2_constraints[:, :-1], col_p_for_constraints, tableau_p2_constraints[:, -1:]])
     tableau_p2 = np.vstack([tableau_p2, p_row])
     
-    # Koreksi Basis di Baris P Baru
     num_vars = tableau_p2.shape[1] - 2
     for col_idx in range(num_vars):
         column = tableau_p2[:-1, col_idx]
         is_basis = np.sum(np.abs(column)) == 1 and np.count_nonzero(column) == 1
-        
         if is_basis:
             if not np.isclose(tableau_p2[-1, col_idx], 0):
                 row_idx = np.where(np.isclose(column, 1))[0][0]
@@ -63,17 +53,39 @@ def main():
                 tableau_p2[-1, :] -= koefisien * tableau_p2[row_idx, :]
 
     solver_p2 = SimplexSolver(tableau_p2)
-    print("\nTableau Awal Fase 2 (Setelah Koreksi Basis):")
-    print(solver_p2)
     solver_p2.solve()
 
-    # Tampilkan hasil akhir
-    print("\n--- HASIL AKHIR ---")
-    optimal_P = solver_p2.tableau[-1, -1]
+    # --- HASIL AKHIR YANG SUDAH DIPERBAIKI ---
+    print("\n\n" + "="*30)
+    print("       HASIL AKHIR OPTIMASI")
+    print("="*30)
+    
+    final_tableau = solver_p2.tableau
+    
+    # Ambil nilai P_maks dari solver
+    optimal_P = final_tableau[-1, -1]
+    # Konversi ke Z_min
     optimal_Z = -optimal_P
-    print(f"Nilai P Maksimal = {optimal_P:.3f}")
-    print(f"Nilai Z Minimal = {optimal_Z:.3f}")
-    solver_p2.display_solution()
+
+    print(f"\nJenis Masalah: Minimisasi")
+    print(f"Nilai Optimal Z Minimal = {optimal_Z:.3f}")
+    
+    # Ambil nilai variabel keputusan dari tabel akhir
+    print("\nSolusi Variabel Keputusan:")
+    num_decision_vars = 2 # Kita tahu ada x1 dan x2
+    solution = {}
+    for col in range(num_decision_vars):
+        column_data = final_tableau[:, col]
+        is_basis = np.sum(np.abs(column_data)) == 1 and np.count_nonzero(column_data) == 1
+        if is_basis:
+            row_index = np.where(np.isclose(column_data, 1))[0][0]
+            solution[f'x{col+1}'] = final_tableau[row_index, -1]
+
+    for i in range(num_decision_vars):
+        value = solution.get(f'x{i+1}', 0)
+        print(f"  x{i+1} = {value:.3f}")
+    
+    print("="*30)
 
 
 if __name__ == "__main__":
