@@ -127,3 +127,9 @@ class SimplexSolver:
              # Jika variabel tidak ada di basis, nilainya 0
             value = solution.get(f'x{i+1}', 0)
             print(f"  x{i+1} = {value:.2f}")
+
+    def __repr__(self):
+        """
+        Representasi string dari tabel saat ini untuk memudahkan debugging.
+        """
+        return f"Current Tableau:\n{self.tableau}"
