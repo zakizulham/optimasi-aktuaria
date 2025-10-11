@@ -3,31 +3,35 @@ from simplex_solver import SimplexSolver
 
 def main():
     """
-    Fungsi utama untuk menjalankan program.
+    Menjalankan solver Simpleks Standar untuk soal maksimisasi.
     """
-    print("--- OptiManufaktur Solver ---")
+    np.set_printoptions(linewidth=99999, suppress=True, precision=3)
 
-    np.set_printoptions(linewidth=np.inf, suppress=True, precision=3) # type: ignore
-
-    # Definisikan masalah baru
-    # Kolom: [x1, x2, s1, s2, s3, Z, Solusi]
-    tableau_phase1 = np.array([
-        [2,   1,  1,  0,  0,  0,  50 ],
-        [2,   5,  0,  1,  0,  0,  100],
-        [2,   3,  0,  0,  1,  0,  90 ],
-        [-4, -10, 0,  0,  0,  1,  0  ]
+    # --- Definisi Masalah ---
+    # Maksimisasi Z = 3x1 + 2x2 + 3x3
+    
+    # Kolom: [x1, x2, x3, s1, s2, Z, Solusi]
+    tableau = np.array([
+        [2.,  1.,  1.,  1.,  0.,  0.,  2.],
+        [3.,  4.,  2.,  0.,  1.,  0.,  8.],
+        [-3., -2., -3.,  0.,  0.,  1.,  0.]
     ])
 
-    # Inisialisasi solver dengan masalah kita
-    solver = SimplexSolver(tableau_phase1, num_decision_vars = 2)
-
-    # Cetak tabel awal untuk verifikasi
-    print("Tabel Simpleks Awal (Fase 1):")
-    print("Ingat Kolom: [x1, x2, s1, s2, s3, Z, Solusi]")
+    # Buat dan jalankan solver
+    solver = SimplexSolver(tableau, num_decision_vars=3)
+    print("--- ✳️ MEMULAI SOLVER SIMPLEKS STANDAR ---")
+    print("Tableau Awal:")
     print(solver)
-
-    # Panggil method solve (saat ini belum melakukan apa-apa)
+    
     solver.solve()
+    
+    # --- HASIL AKHIR ---
+    # Kita bisa langsung menggunakan display_solution karena ini masalah maksimisasi standar
+    print("\n\n" + "="*30)
+    print("       HASIL AKHIR OPTIMASI")
+    print("="*30)
+    solver.display_solution()
+    print("="*30)
 
 
 if __name__ == "__main__":
